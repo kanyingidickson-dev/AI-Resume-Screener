@@ -1,0 +1,10 @@
+We are hiring a backend engineer to build scalable APIs.
+
+Requirements:
+- Python
+- REST API design
+- PostgreSQL
+- Docker
+- CI/CD
+- Observability (logging/metrics)
+- Experience with testing

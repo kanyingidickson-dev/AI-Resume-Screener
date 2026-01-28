@@ -1,0 +1,12 @@
+Backend engineer with experience building REST APIs in Python.
+
+Skills:
+- Python
+- FastAPI
+- SQLAlchemy
+- PostgreSQL
+- pytest
+
+Experience:
+- Built API endpoints with validation and authentication
+- Designed relational schemas and optimized queries
