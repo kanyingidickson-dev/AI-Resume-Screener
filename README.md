@@ -1,5 +1,7 @@
 # AI Resume Screener
 
+![CI](https://github.com/kanyingidickson-dev/AI-Resume-Screener/actions/workflows/ci.yml/badge.svg)
+
 A small, explainable resume screener that scores a resume against a job description.
 
 The emphasis is clarity over hype:
