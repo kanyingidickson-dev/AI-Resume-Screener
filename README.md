@@ -110,9 +110,19 @@ GitHub Pages setup:
 - Similarity is computed on normalized text with light preprocessing.
 - Breakdown focuses on terms that appear frequently in the JD and are missing from the resume.
 
-## Future improvements
+## Advanced scoring options (implemented)
 
-- Section-aware scoring (skills vs experience vs projects)
-- Custom weighting (must-have vs nice-to-have)
-- Embeddings-based similarity (optional) with caching
-- Bias and fairness documentation + mitigation strategies
+- `method`: `tfidf` (default) or `lsa` (a lightweight semantic/embedding-like latent space using SVD)
+- `section_aware`: scores job similarity against resume sections (skills/experience/projects) and combines them
+- `must_have_keywords` / `nice_to_have_keywords`: optional keyword weighting
+
+## Bias and fairness
+
+This project is intentionally keyword-focused and should not be used as an automated hiring decision system.
+
+Practical guidance:
+
+- Use this as a decision-support tool, not a filter that automatically rejects people.
+- Avoid using protected characteristics (directly or indirectly) as criteria.
+- Validate the tool against a diverse set of resumes and job descriptions.
+- Prefer structured job requirements and keep the scoring rules explicit and reviewable.

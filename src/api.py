@@ -54,7 +54,70 @@ def create_app() -> Flask:
         if not isinstance(job_text, str) or not job_text.strip():
             return jsonify({"error": "Field 'job_description' is required"}), 400
 
-        breakdown = score_resume_against_job(resume_text, job_text)
+        method = data.get("method", "tfidf")
+        if not isinstance(method, str) or method not in {"tfidf", "lsa"}:
+            return jsonify({"error": "Field 'method' must be 'tfidf' or 'lsa'"}), 400
+
+        section_aware = data.get("section_aware", False)
+        if not isinstance(section_aware, bool):
+            return jsonify({"error": "Field 'section_aware' must be a boolean"}), 400
+
+        section_weights = data.get("section_weights")
+        section_weights_clean: dict[str, float] | None = None
+        if section_weights is not None:
+            if not isinstance(section_weights, dict):
+                return jsonify({"error": "Field 'section_weights' must be an object"}), 400
+            section_weights_clean = {}
+            for k, v in section_weights.items():
+                if not isinstance(k, str):
+                    return jsonify({"error": "Field 'section_weights' keys must be strings"}), 400
+                if not isinstance(v, (int, float)):
+                    return jsonify(
+                        {"error": "Field 'section_weights' values must be numbers"}
+                    ), 400
+                section_weights_clean[k] = float(v)
+
+        def _parse_keywords(value: object) -> list[str] | None:
+            if value is None:
+                return None
+            if isinstance(value, str):
+                parts = [p.strip() for p in value.split(",")]
+                return [p for p in parts if p]
+            if isinstance(value, list) and all(isinstance(x, str) for x in value):
+                return [x for x in value if x.strip()]
+            raise TypeError
+
+        try:
+            must_have_keywords = _parse_keywords(data.get("must_have_keywords"))
+        except TypeError:
+            return jsonify({"error": "Field 'must_have_keywords' must be a string or list"}), 400
+
+        try:
+            nice_to_have_keywords = _parse_keywords(data.get("nice_to_have_keywords"))
+        except TypeError:
+            return jsonify(
+                {"error": "Field 'nice_to_have_keywords' must be a string or list"}
+            ), 400
+
+        must_have_penalty = data.get("must_have_penalty", 5)
+        if not isinstance(must_have_penalty, int):
+            return jsonify({"error": "Field 'must_have_penalty' must be an integer"}), 400
+
+        nice_to_have_bonus = data.get("nice_to_have_bonus", 1)
+        if not isinstance(nice_to_have_bonus, int):
+            return jsonify({"error": "Field 'nice_to_have_bonus' must be an integer"}), 400
+
+        breakdown = score_resume_against_job(
+            resume_text,
+            job_text,
+            method=method,
+            section_aware=section_aware,
+            section_weights=section_weights_clean,
+            must_have_keywords=must_have_keywords,
+            nice_to_have_keywords=nice_to_have_keywords,
+            must_have_penalty=must_have_penalty,
+            nice_to_have_bonus=nice_to_have_bonus,
+        )
 
         return (
             jsonify(
@@ -63,6 +126,9 @@ def create_app() -> Flask:
                     "cosine_similarity": breakdown.cosine_similarity,
                     "matched_keywords": breakdown.matched_keywords,
                     "missing_keywords": breakdown.missing_keywords,
+                    "method": breakdown.method,
+                    "section_scores_0_to_100": breakdown.section_scores_0_to_100,
+                    "must_have_missing": breakdown.must_have_missing,
                 }
             ),
             200,
