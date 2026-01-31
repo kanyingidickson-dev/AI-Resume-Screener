@@ -1,6 +1,7 @@
 const DEFAULT_API_BASE_URL = "http://localhost:5000";
 const STORAGE_KEY = "resume_screener_api_base_url";
 const LEGACY_STORAGE_KEY = "ai_resume_screener_api_base_url";
+const THEME_KEY = "resume_screener_theme";
 
 let lastResult = null;
 
@@ -224,6 +225,8 @@ function setRecommendations(container, items) {
 }
 
 function init() {
+  const themeToggle = document.getElementById("themeToggle");
+  const themeStatus = document.getElementById("themeStatus");
   const apiBaseUrlInput = document.getElementById("apiBaseUrl");
   const healthBtn = document.getElementById("healthBtn");
   const healthStatus = document.getElementById("healthStatus");
@@ -283,6 +286,28 @@ function init() {
   apiBaseUrlInput.value = stored || DEFAULT_API_BASE_URL;
   if (stored && !window.localStorage.getItem(STORAGE_KEY)) {
     window.localStorage.setItem(STORAGE_KEY, stored);
+  }
+
+  function setTheme(mode) {
+    if (!mode) return;
+    document.documentElement.setAttribute("data-theme", mode);
+    window.localStorage.setItem(THEME_KEY, mode);
+    if (themeToggle) {
+      themeToggle.checked = mode === "dark";
+    }
+    if (themeStatus) {
+      themeStatus.textContent = mode === "dark" ? "Dark" : "Light";
+    }
+  }
+
+  const savedTheme = window.localStorage.getItem(THEME_KEY);
+  const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+  setTheme(savedTheme || (prefersDark ? "dark" : "light"));
+
+  if (themeToggle) {
+    themeToggle.addEventListener("change", () => {
+      setTheme(themeToggle.checked ? "dark" : "light");
+    });
   }
 
   function setLoading(isLoading) {
