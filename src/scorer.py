@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from functools import lru_cache
+import re
 from typing import Literal
 
 import numpy as np
@@ -106,6 +107,13 @@ def _normalize_keywords(keywords: list[str] | None) -> tuple[str, ...]:
     return tuple(sorted(set(out)))
 
 
+def _contains_keyword(normalized_text: str, normalized_keyword: str) -> bool:
+    if not normalized_keyword:
+        return False
+    pattern = re.compile(r"(?<!\\w)" + re.escape(normalized_keyword) + r"(?!\\w)")
+    return pattern.search(normalized_text) is not None
+
+
 @lru_cache(maxsize=256)
 def _score_cached(
     resume_text: str,
@@ -173,8 +181,8 @@ def _score_cached(
     resume_top = _top_terms_from_vector(feature_names, resume_arr, k=matched_top_k)
     matched_keywords = sorted(set(matched + resume_top), key=lambda x: x)
 
-    missing_must = [k for k in must_have if k not in resume]
-    matched_nice = [k for k in nice_to_have if k in resume]
+    missing_must = [k for k in must_have if not _contains_keyword(resume, k)]
+    matched_nice = [k for k in nice_to_have if _contains_keyword(resume, k)]
 
     score = int(round(max(0.0, min(1.0, cos)) * 100))
     score = score - int(must_have_penalty) * len(missing_must) + int(nice_to_have_bonus) * len(matched_nice)
