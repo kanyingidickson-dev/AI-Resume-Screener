@@ -1,4 +1,4 @@
-# AI Resume Screener
+# Resume Screener
 
 ![CI](https://github.com/kanyingidickson-dev/AI-Resume-Screener/actions/workflows/ci.yml/badge.svg)
 
@@ -24,8 +24,9 @@ The repo includes:
 ## Quickstart (CLI)
 
 ```bash
-pip install -r requirements.txt
-python -m src.cli --resume data/resumes/sample_resume.txt --job data/job_descriptions/sample_jd.txt
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python -m src.cli --resume data/resumes/sample_resume.txt --job data/job_descriptions/sample_jd.txt
 ```
 
 ## Run the API (Flask)
@@ -33,8 +34,9 @@ python -m src.cli --resume data/resumes/sample_resume.txt --job data/job_descrip
 The API is useful when you want to connect a frontend (including GitHub Pages).
 
 ```bash
-pip install -r requirements.txt
-python -m src.api
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python -m src.api
 ```
 
 Configuration (environment variables):
@@ -79,11 +81,11 @@ Notes:
 
 Local usage:
 
-1. Start the API: `python -m src.api`
+1. Start the API: `.venv/bin/python -m src.api`
 2. Serve the frontend:
 
    ```bash
-   python -m http.server 8000 --directory docs
+   python3 -m http.server 8000 --directory docs
    ```
 
 3. Open `http://localhost:8000` and set the API Base URL to `http://localhost:5000`.
