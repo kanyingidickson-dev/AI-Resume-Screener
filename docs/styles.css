@@ -31,10 +31,8 @@
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --bg: #0b1118;
-  --bg-gradient:
-    radial-gradient(1100px 600px at 15% -10%, rgba(74, 144, 226, 0.3), transparent 62%),
-    radial-gradient(900px 500px at 85% 0%, rgba(15, 118, 110, 0.28), transparent 65%);
+  --bg: #000000;
+  --bg-gradient: none;
   --panel: #121a24;
   --panel-2: #0f1722;
   --text: #e2e8f0;
