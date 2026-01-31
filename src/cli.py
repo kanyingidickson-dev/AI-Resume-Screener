@@ -6,8 +6,21 @@ from pathlib import Path
 from src.scorer import score_resume_against_job
 
 
+def _read_text_file(path: Path, *, label: str) -> str:
+    try:
+        if not path.exists():
+            raise SystemExit(f"{label} file not found: {path}")
+        if not path.is_file():
+            raise SystemExit(f"{label} path is not a file: {path}")
+        return path.read_text(encoding="utf-8")
+    except UnicodeDecodeError as e:
+        raise SystemExit(f"{label} file must be UTF-8 text: {path}") from e
+    except OSError as e:
+        raise SystemExit(f"Failed to read {label} file: {path}") from e
+
+
 def main() -> int:
-    parser = argparse.ArgumentParser(description="AI Resume Screener")
+    parser = argparse.ArgumentParser(description="Resume Screener")
     parser.add_argument("--resume", required=True, help="Path to resume text file")
     parser.add_argument("--job", required=True, help="Path to job description text file")
     parser.add_argument("--method", choices=["tfidf", "lsa"], default="tfidf")
@@ -35,8 +48,8 @@ def main() -> int:
     resume_path = Path(args.resume)
     job_path = Path(args.job)
 
-    resume_text = resume_path.read_text(encoding="utf-8")
-    job_text = job_path.read_text(encoding="utf-8")
+    resume_text = _read_text_file(resume_path, label="Resume")
+    job_text = _read_text_file(job_path, label="Job description")
 
     section_weights: dict[str, float] = {}
     for item in args.section_weight:
