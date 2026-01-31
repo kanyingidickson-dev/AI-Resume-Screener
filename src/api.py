@@ -4,6 +4,7 @@ import os
 
 from flask import Flask, jsonify, request
 from flask_cors import CORS
+from werkzeug.exceptions import HTTPException
 
 from src.scorer import score_resume_against_job
 
@@ -15,15 +16,50 @@ def _cors_origins_from_env() -> str | list[str]:
     return [o.strip() for o in raw.split(",") if o.strip()]
 
 
+def _int_from_env(
+    name: str,
+    default: int,
+    *,
+    min_value: int | None = None,
+    max_value: int | None = None,
+) -> int:
+    raw = os.environ.get(name)
+    if raw is None:
+        return default
+    raw = raw.strip()
+    if not raw:
+        return default
+    try:
+        value = int(raw)
+    except ValueError:
+        return default
+    if min_value is not None and value < min_value:
+        return default
+    if max_value is not None and value > max_value:
+        return default
+    return value
+
+
 def create_app() -> Flask:
     app = Flask(__name__)
 
-    app.config["MAX_CONTENT_LENGTH"] = int(
-        os.environ.get("MAX_CONTENT_LENGTH_BYTES", str(1024 * 1024))
+    app.config["MAX_CONTENT_LENGTH"] = _int_from_env(
+        "MAX_CONTENT_LENGTH_BYTES",
+        1024 * 1024,
+        min_value=1,
+        max_value=50 * 1024 * 1024,
     )
 
     cors_origins = _cors_origins_from_env()
     CORS(app, resources={r"/*": {"origins": cors_origins}})
+
+    @app.errorhandler(HTTPException)
+    def http_exception(e: HTTPException) -> tuple[object, int]:
+        return jsonify({"error": e.description}), int(e.code or 500)
+
+    @app.errorhandler(Exception)
+    def unhandled_exception(_: Exception) -> tuple[object, int]:
+        return jsonify({"error": "Internal server error"}), 500
 
     @app.errorhandler(413)
     def request_entity_too_large(_: object) -> tuple[object, int]:
@@ -102,10 +138,18 @@ def create_app() -> Flask:
         must_have_penalty = data.get("must_have_penalty", 5)
         if not isinstance(must_have_penalty, int):
             return jsonify({"error": "Field 'must_have_penalty' must be an integer"}), 400
+        if must_have_penalty < 0 or must_have_penalty > 100:
+            return jsonify(
+                {"error": "Field 'must_have_penalty' must be between 0 and 100"}
+            ), 400
 
         nice_to_have_bonus = data.get("nice_to_have_bonus", 1)
         if not isinstance(nice_to_have_bonus, int):
             return jsonify({"error": "Field 'nice_to_have_bonus' must be an integer"}), 400
+        if nice_to_have_bonus < 0 or nice_to_have_bonus > 100:
+            return jsonify(
+                {"error": "Field 'nice_to_have_bonus' must be between 0 and 100"}
+            ), 400
 
         breakdown = score_resume_against_job(
             resume_text,
@@ -140,6 +184,6 @@ def create_app() -> Flask:
 if __name__ == "__main__":
     app = create_app()
     host = os.environ.get("HOST", "0.0.0.0")
-    port = int(os.environ.get("PORT", "5000"))
+    port = _int_from_env("PORT", 5000, min_value=1, max_value=65535)
     debug = os.environ.get("DEBUG", "0") == "1"
     app.run(host=host, port=port, debug=debug)
