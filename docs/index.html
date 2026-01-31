@@ -3,8 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AI Resume Screener</title>
-    <meta name="description" content="Explainable resume screening using TF-IDF + cosine similarity. Compare a resume against a job description and get matched/missing keywords." />
+    <title>Resume Screener</title>
+    <meta name="description" content="Explainable resume screening using TF‑IDF + cosine similarity. Compare a resume against a job description and get matched/missing keywords." />
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
@@ -17,8 +17,8 @@
     <main class="container">
       <header class="header">
         <div>
-          <h1>AI Resume Screener</h1>
-          <p class="subtitle">Explainable keyword-focused screening using TF-IDF + cosine similarity.</p>
+          <h1>Resume Screener</h1>
+          <p class="subtitle">Keyword-focused matching with an explainable breakdown.</p>
         </div>
         <a class="github-link" href="https://github.com/kanyingidickson-dev/AI-Resume-Screener" target="_blank" rel="noreferrer">GitHub</a>
       </header>
@@ -43,8 +43,8 @@
             <div class="row">
               <h3>Resume</h3>
               <label class="file">
-                <input id="resumeFile" type="file" accept=".txt" />
-                <span class="file-btn">Load .txt</span>
+                <input id="resumeFile" type="file" accept=".txt,.docx" />
+                <span class="file-btn">Load file</span>
               </label>
             </div>
             <textarea id="resumeText" placeholder="Paste your resume text here..." aria-label="Resume"></textarea>
@@ -56,8 +56,8 @@
             <div class="row">
               <h3>Job Description</h3>
               <label class="file">
-                <input id="jobFile" type="file" accept=".txt" />
-                <span class="file-btn">Load .txt</span>
+                <input id="jobFile" type="file" accept=".txt,.docx" />
+                <span class="file-btn">Load file</span>
               </label>
             </div>
             <textarea id="jobText" placeholder="Paste the job description text here..." aria-label="Job description"></textarea>
@@ -66,6 +66,78 @@
             </div>
           </div>
         </div>
+        <p class="hint" id="fileHint">You can load .txt files directly. .docx is supported in modern browsers.</p>
+
+        <div class="options">
+          <h3>Scoring Options</h3>
+          <div class="options-grid">
+            <label class="field">
+              <span>Method</span>
+              <select id="method" class="select" aria-label="Scoring method">
+                <option value="tfidf">TF-IDF (default)</option>
+                <option value="lsa">LSA</option>
+              </select>
+              <span id="methodHint" class="hint">LSA uses a lightweight latent semantic space (SVD) for slightly broader matching.</span>
+            </label>
+
+            <label class="field checkbox">
+              <span>Section-aware scoring</span>
+              <input id="sectionAware" type="checkbox" aria-describedby="sectionAwareHint" />
+              <span id="sectionAwareHint" class="hint">Scores job similarity against common resume sections (skills/experience/projects) and combines them.</span>
+            </label>
+
+            <label class="field">
+              <span>Must-have keywords</span>
+              <input id="mustHave" type="text" placeholder="e.g. docker, postgres" />
+              <span id="mustHaveHint" class="hint">Missing items reduce the score.</span>
+            </label>
+
+            <label class="field">
+              <span>Must-have penalty</span>
+              <div class="range-row">
+                <input
+                  id="mustHavePenalty"
+                  type="range"
+                  min="0"
+                  max="25"
+                  step="1"
+                  value="5"
+                  aria-label="Must-have penalty"
+                  aria-describedby="mustHavePenaltyHint"
+                />
+                <output id="mustHavePenaltyOut" class="range-out" aria-live="polite">5</output>
+              </div>
+              <span id="mustHavePenaltyHint" class="hint">Points removed for each missing must-have keyword.</span>
+              <span id="mustHavePenaltyImpact" class="hint"></span>
+            </label>
+
+            <label class="field">
+              <span>Nice-to-have keywords</span>
+              <input id="niceToHave" type="text" placeholder="e.g. terraform, k8s" />
+              <span id="niceToHaveHint" class="hint">Matched items add a small bonus.</span>
+            </label>
+
+            <label class="field">
+              <span>Nice-to-have bonus</span>
+              <div class="range-row">
+                <input
+                  id="niceToHaveBonus"
+                  type="range"
+                  min="0"
+                  max="10"
+                  step="1"
+                  value="1"
+                  aria-label="Nice-to-have bonus"
+                  aria-describedby="niceToHaveBonusHint"
+                />
+                <output id="niceToHaveBonusOut" class="range-out" aria-live="polite">1</output>
+              </div>
+              <span id="niceToHaveBonusHint" class="hint">Points added for each matched nice-to-have keyword.</span>
+              <span id="niceToHaveBonusImpact" class="hint"></span>
+            </label>
+          </div>
+        </div>
+
         <div class="actions">
           <button id="analyzeBtn" class="btn" type="button">Analyze</button>
           <button id="clearBtn" class="btn secondary" type="button">Clear</button>
@@ -73,9 +145,9 @@
         <div id="formError" class="status error" role="alert" tabindex="-1"></div>
       </section>
 
-      <section class="card">
+      <section class="card" aria-labelledby="resultsHeading">
         <div class="card-header">
-          <h2>Results</h2>
+          <h2 id="resultsHeading">Results</h2>
           <button id="copyBtn" class="btn secondary" type="button" disabled>Copy JSON</button>
         </div>
         <div id="copyStatus" class="status" role="status" aria-live="polite" tabindex="-1"></div>
@@ -88,6 +160,10 @@
             <div class="metric-label">Cosine Similarity</div>
             <div id="cosine" class="metric-value">—</div>
           </div>
+          <div class="metric">
+            <div class="metric-label">Method</div>
+            <div id="methodOut" class="metric-value small">—</div>
+          </div>
         </div>
 
         <div class="scorebar" aria-hidden="true">
@@ -95,6 +171,17 @@
         </div>
 
         <div id="matchHint" class="status" role="status" aria-live="polite" tabindex="-1"></div>
+
+        <div class="explain">
+          <h3>How to read these results</h3>
+          <p id="scoreExplain" class="explain-text"></p>
+          <p id="cosineExplain" class="explain-text"></p>
+        </div>
+
+        <div class="recommend" role="region" aria-label="Recommendations">
+          <h3>Recommendations</h3>
+          <ul id="recommendations" class="recommend-list" aria-live="polite"></ul>
+        </div>
 
         <div class="two-col">
           <div>
@@ -106,6 +193,50 @@
             <div id="missing" class="chips"></div>
           </div>
         </div>
+
+        <div class="two-col">
+          <div>
+            <h3>Must-have</h3>
+            <div class="subblock">
+              <div class="subblock-title">Matched</div>
+              <div id="mustHaveMatched" class="chips"></div>
+            </div>
+            <div class="subblock">
+              <div class="subblock-title">Missing</div>
+              <div id="mustHaveMissing" class="chips"></div>
+            </div>
+          </div>
+          <div>
+            <h3>Nice-to-have</h3>
+            <div class="subblock">
+              <div class="subblock-title">Matched</div>
+              <div id="niceToHaveMatched" class="chips"></div>
+            </div>
+            <div class="subblock">
+              <div class="subblock-title">Missing</div>
+              <div id="niceToHaveMissing" class="chips"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="two-col">
+          <div>
+            <h3>Section Scores</h3>
+            <div id="sectionScores" class="section-scores"></div>
+          </div>
+          <div>
+            <h3>Resume Improvement Checklist</h3>
+            <div class="checklist-meta">
+              <span id="checklistProgress" class="muted"></span>
+            </div>
+            <ul id="checklist" class="checklist-list"></ul>
+          </div>
+        </div>
+
+        <div class="tip" role="region" aria-label="Keyword suggestion">
+          <div class="tip-title">Keyword tip</div>
+          <div id="keywordTip" class="tip-text">Click a keyword chip to see a suggestion.</div>
+        </div>
       </section>
 
       <footer class="footer">
@@ -115,6 +246,7 @@
       </footer>
     </main>
 
+    <script src="https://unpkg.com/mammoth@1.6.0/mammoth.browser.min.js"></script>
     <script src="./app.js"></script>
   </body>
 </html>
