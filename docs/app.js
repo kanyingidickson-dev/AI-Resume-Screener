@@ -46,6 +46,8 @@ function init() {
   const healthBtn = document.getElementById("healthBtn");
   const healthStatus = document.getElementById("healthStatus");
 
+  const loadingEl = document.getElementById("loading");
+
   const resumeText = document.getElementById("resumeText");
   const jobText = document.getElementById("jobText");
   const resumeFile = document.getElementById("resumeFile");
@@ -61,6 +63,7 @@ function init() {
   const copyBtn = document.getElementById("copyBtn");
   const copyStatus = document.getElementById("copyStatus");
   const scorebarFill = document.getElementById("scorebarFill");
+  const matchHint = document.getElementById("matchHint");
 
   const scoreEl = document.getElementById("score");
   const cosineEl = document.getElementById("cosine");
@@ -69,6 +72,12 @@ function init() {
 
   const stored = window.localStorage.getItem(STORAGE_KEY);
   apiBaseUrlInput.value = stored || DEFAULT_API_BASE_URL;
+
+  function setLoading(isLoading) {
+    loadingEl.hidden = !isLoading;
+    loadingEl.setAttribute("aria-hidden", String(!isLoading));
+    document.body.style.overflow = isLoading ? "hidden" : "";
+  }
 
   function updateCounts() {
     resumeCount.textContent = `${(resumeText.value || "").length} chars`;
@@ -90,6 +99,14 @@ function init() {
     renderChips(missingEl, payload && payload.missing_keywords, "bad");
 
     copyBtn.disabled = !payload;
+
+    setStatus(matchHint, "");
+    if (payload && Number.isFinite(score) && scoreSafe < 25) {
+      setStatus(
+        matchHint,
+        "Low match: consider tailoring your resume keywords and experience bullets to the job description."
+      );
+    }
   }
 
   updateCounts();
@@ -177,7 +194,11 @@ function init() {
       const data = await res.json().catch(() => ({}));
       setStatus(healthStatus, `OK: ${data.status || "ok"}`);
     } catch (e) {
-      setStatus(healthStatus, String(e && e.message ? e.message : e), { isError: true });
+      setStatus(
+        healthStatus,
+        "Could not reach the API. Double-check the API Base URL and that the server is running.",
+        { isError: true }
+      );
     } finally {
       healthBtn.disabled = false;
     }
@@ -215,6 +236,8 @@ function init() {
 
     analyzeBtn.disabled = true;
     analyzeBtn.textContent = "Analyzing...";
+    clearBtn.disabled = true;
+    setLoading(true);
 
     try {
       const res = await fetch(`${baseUrl}/score`, {
@@ -227,15 +250,40 @@ function init() {
       if (!res.ok) {
         const msg = payload && payload.error ? payload.error : `Request failed (${res.status}).`;
         setStatus(formError, msg, { isError: true });
+        formError.focus();
+        return;
+      }
+
+      const isValid =
+        payload &&
+        typeof payload.score_0_to_100 === "number" &&
+        typeof payload.cosine_similarity === "number" &&
+        Array.isArray(payload.matched_keywords) &&
+        Array.isArray(payload.missing_keywords);
+
+      if (!isValid) {
+        setStatus(
+          formError,
+          "The API response was missing expected fields. Please try again or update the API.",
+          { isError: true }
+        );
+        formError.focus();
         return;
       }
 
       setResults(payload);
     } catch (e) {
-      setStatus(formError, String(e && e.message ? e.message : e), { isError: true });
+      setStatus(
+        formError,
+        "Could not reach the API. If you are using GitHub Pages, make sure your API enables CORS for your Pages domain.",
+        { isError: true }
+      );
+      formError.focus();
     } finally {
       analyzeBtn.disabled = false;
       analyzeBtn.textContent = "Analyze";
+      clearBtn.disabled = false;
+      setLoading(false);
     }
   });
 }

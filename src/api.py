@@ -38,7 +38,12 @@ def create_app() -> Flask:
         if not request.is_json:
             return jsonify({"error": "Content-Type application/json is required"}), 415
 
-        data = request.get_json(silent=True) or {}
+        data = request.get_json(silent=True)
+        if data is None:
+            return jsonify({"error": "Invalid JSON body"}), 400
+
+        if not isinstance(data, dict):
+            return jsonify({"error": "JSON body must be an object"}), 400
 
         resume_text = data.get("resume")
         job_text = data.get("job_description")

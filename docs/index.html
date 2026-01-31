@@ -8,6 +8,12 @@
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
+    <div id="loading" class="loading" hidden aria-hidden="true">
+      <div class="loading-card" role="status" aria-live="polite">
+        <div class="spinner" aria-hidden="true"></div>
+        <div class="loading-text">Analyzing…</div>
+      </div>
+    </div>
     <main class="container">
       <header class="header">
         <div>
@@ -27,7 +33,7 @@
           </label>
           <button id="healthBtn" class="btn secondary" type="button">Test API</button>
         </div>
-        <div id="healthStatus" class="status" role="status" aria-live="polite"></div>
+        <div id="healthStatus" class="status" role="status" aria-live="polite" tabindex="-1"></div>
       </section>
 
       <section class="card">
@@ -64,7 +70,7 @@
           <button id="analyzeBtn" class="btn" type="button">Analyze</button>
           <button id="clearBtn" class="btn secondary" type="button">Clear</button>
         </div>
-        <div id="formError" class="status error" role="alert"></div>
+        <div id="formError" class="status error" role="alert" tabindex="-1"></div>
       </section>
 
       <section class="card">
@@ -72,7 +78,7 @@
           <h2>Results</h2>
           <button id="copyBtn" class="btn secondary" type="button" disabled>Copy JSON</button>
         </div>
-        <div id="copyStatus" class="status" role="status" aria-live="polite"></div>
+        <div id="copyStatus" class="status" role="status" aria-live="polite" tabindex="-1"></div>
         <div id="results" class="results">
           <div class="metric">
             <div class="metric-label">Overall Score</div>
@@ -87,6 +93,8 @@
         <div class="scorebar" aria-hidden="true">
           <div id="scorebarFill" class="scorebar-fill" style="width: 0%"></div>
         </div>
+
+        <div id="matchHint" class="status" role="status" aria-live="polite" tabindex="-1"></div>
 
         <div class="two-col">
           <div>
