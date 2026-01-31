@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Resume Screener</title>
+    <meta name="description" content="Explainable resume screening using TF-IDF + cosine similarity. Compare a resume against a job description and get matched/missing keywords." />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="container">
+      <header class="header">
+        <div>
+          <h1>AI Resume Screener</h1>
+          <p class="subtitle">Explainable keyword-focused screening using TF-IDF + cosine similarity.</p>
+        </div>
+        <a class="github-link" href="https://github.com/kanyingidickson-dev/AI-Resume-Screener" target="_blank" rel="noreferrer">GitHub</a>
+      </header>
+
+      <section class="card">
+        <h2>API Settings</h2>
+        <div class="grid">
+          <label class="field">
+            <span>API Base URL</span>
+            <input id="apiBaseUrl" type="url" placeholder="https://your-api.example.com" />
+            <span class="hint">Use <code>http://localhost:5000</code> when running locally.</span>
+          </label>
+          <button id="healthBtn" class="btn secondary" type="button">Test API</button>
+        </div>
+        <div id="healthStatus" class="status" role="status" aria-live="polite"></div>
+      </section>
+
+      <section class="card">
+        <h2>Input</h2>
+        <div class="two-col">
+          <div>
+            <div class="row">
+              <h3>Resume</h3>
+              <label class="file">
+                <input id="resumeFile" type="file" accept=".txt" />
+                <span class="file-btn">Load .txt</span>
+              </label>
+            </div>
+            <textarea id="resumeText" placeholder="Paste your resume text here..." aria-label="Resume"></textarea>
+            <div class="meta">
+              <span id="resumeCount" class="muted">0 chars</span>
+            </div>
+          </div>
+          <div>
+            <div class="row">
+              <h3>Job Description</h3>
+              <label class="file">
+                <input id="jobFile" type="file" accept=".txt" />
+                <span class="file-btn">Load .txt</span>
+              </label>
+            </div>
+            <textarea id="jobText" placeholder="Paste the job description text here..." aria-label="Job description"></textarea>
+            <div class="meta">
+              <span id="jobCount" class="muted">0 chars</span>
+            </div>
+          </div>
+        </div>
+        <div class="actions">
+          <button id="analyzeBtn" class="btn" type="button">Analyze</button>
+          <button id="clearBtn" class="btn secondary" type="button">Clear</button>
+        </div>
+        <div id="formError" class="status error" role="alert"></div>
+      </section>
+
+      <section class="card">
+        <div class="card-header">
+          <h2>Results</h2>
+          <button id="copyBtn" class="btn secondary" type="button" disabled>Copy JSON</button>
+        </div>
+        <div id="copyStatus" class="status" role="status" aria-live="polite"></div>
+        <div id="results" class="results">
+          <div class="metric">
+            <div class="metric-label">Overall Score</div>
+            <div id="score" class="metric-value">—</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Cosine Similarity</div>
+            <div id="cosine" class="metric-value">—</div>
+          </div>
+        </div>
+
+        <div class="scorebar" aria-hidden="true">
+          <div id="scorebarFill" class="scorebar-fill" style="width: 0%"></div>
+        </div>
+
+        <div class="two-col">
+          <div>
+            <h3>Matched Keywords</h3>
+            <div id="matched" class="chips"></div>
+          </div>
+          <div>
+            <h3>Missing Keywords</h3>
+            <div id="missing" class="chips"></div>
+          </div>
+        </div>
+      </section>
+
+      <footer class="footer">
+        <p>
+          This frontend is static (GitHub Pages-ready). It calls a separate Python API.
+        </p>
+      </footer>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
